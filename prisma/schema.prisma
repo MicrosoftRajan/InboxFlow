@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  picture       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  emails        Email[]
+}
+
+model Email {
+  id            String   @id @default(uuid())
+  subject       String
+  body          String
+  recipients    String[] // Array of email addresses
+  senderEmail   String   // Sender email address for this campaign
+  scheduledAt   DateTime
+  sentAt        DateTime?
+  status        EmailStatus @default(SCHEDULED)
+  delay         Int      @default(0) // Delay between emails in seconds
+  hourlyLimit   Int      @default(200)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  jobs          EmailJob[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model EmailJob {
+  id            String   @id @default(uuid())
+  emailId       String
+  email         Email    @relation(fields: [emailId], references: [id])
+  recipient     String
+  status        JobStatus @default(PENDING)
+  bullJobId     String?  @unique
+  sentAt        DateTime?
+  error         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum EmailStatus {
+  SCHEDULED
+  SENDING
+  COMPLETED
+  FAILED
+}
+
+enum JobStatus {
+  PENDING
+  SCHEDULED
+  SENT
+  FAILED
+}
