@@ -1,0 +1,59 @@
+# InboxFlow - Render Blueprint
+# Deploy: Connect this repo to Render and use this Blueprint
+
+services:
+  # Redis (required for BullMQ email worker)
+  - type: keyvalue
+    name: inboxflow-redis
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all (backend connects via internal URL)
+    plan: free
+
+  # Backend (Express + Prisma + BullMQ)
+  - type: web
+    name: inboxflow-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: inboxflow-redis
+          property: connectionString
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: WORKER_CONCURRENCY
+        value: "5"
+      - key: MIN_DELAY_BETWEEN_EMAILS
+        value: "2"
+    buildFilter:
+      paths:
+        - backend/**/*
+
+  # Frontend (Next.js)
+  - type: web
+    name: inboxflow-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
+    buildFilter:
+      paths:
+        - frontend/**/*
