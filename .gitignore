@@ -11,3 +11,5 @@ yarn-error.log*
 .vscode/*
 /src/generated/prisma
 .env
+.env
+backend/.env
