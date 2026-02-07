@@ -1,14 +1,7 @@
-# InboxFlow - Render Blueprint
-# https://docs.render.com/blueprint-spec
+# InboxFlow - Render Blueprint (minimal: no Redis in Blueprint)
+# Add Redis manually: Dashboard → New → Redis, then set REDIS_URL on backend
 
 services:
-  - type: keyvalue
-    name: inboxflow-redis
-    ipAllowList:
-      - source: 0.0.0.0/0
-        description: allow
-    plan: free
-
   - type: web
     name: inboxflow-backend
     runtime: node
@@ -20,10 +13,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: inboxflow-redis
-          property: connectionString
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
